@@ -14,4 +14,4 @@ test_script:
     echo "hi"
 
 artifacts:
-- path: gitea
+- path: '**\*.go'
