@@ -1,10 +1,9 @@
-version: 1.0.0.{build}
+build: off
 
-platform: x64
+stack: go 1.14
 
-install:
-  - go version
-  - go env
+before_test:
+  - go vet ./...
 
-build_script:
-  - make backend
+test_script:
+  - go test ./...
