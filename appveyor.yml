@@ -1,3 +1,10 @@
+environment:
+  APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2ngetCYXjI1IN71K3Xt/NKxQIUz5MiFHu3SeZdmKvgZuTh7VFQSJoY8JBxSbmvjSjYqg1gTJhV5ttJRn6WjhaFaLNlqATW61YsGP7a7GODgtJ6yR5xidwV4cgLlt8Zmuaj7f4fZQfXwXxBeIeyvoPlVdbiYKaVKpLIg5azsyqEkCZdcenztloJuNL2wLU/bQ8Muu1dPJt9UwheTll9l8DBH9UoMmhMx5S7yvUDMtJtSFXOmS5vTfMYZznrqvXykO4i1sestRnzqPoQ7n95l8F3Dali5zpUrYRxKOOw1+snOF4pbSF0e2A6uE9yyRFyTI7zER1Q8AnNlVLsyGx/ySuDf6ea07INwZy+z2NueWNcjHQYUddo2Jt/WfNm5TbijdBQfiL4AJZY3Q3MHDV2UiBd0M/w6vD/BdmUuk0Joa3eHsNdYedEZIg7ETidTkWo06o5Aade/FhaS+VLr2GEWKmMAOjGhakDhk3vkikCNYOKhVPKntIg6J7qfSEHIBiOaT6xFfUZWrOWzwE5aQalELdrSkKX2pVPG2Ud5nbrUuPNrrLu2mbwJu4FKsY6Q0vsWJb0T/nM4tbBupDMra/pxQHuz/pGgP/CT7xn4GSNrIJtOr/nFMR/JzxK0qP7PFjHSGHBMx/hP2OhnVdFUtC+uoH1KW+swSlEh19VYP85oeA1Q==
+
+on_finish:
+  - sh: export APPVEYOR_SSH_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+
 stack: go 1.15
 
 version: 1.0.{build}
