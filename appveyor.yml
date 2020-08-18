@@ -1,0 +1,10 @@
+version: 1.0.0.{build}
+
+platform: x64
+
+install:
+  - go version
+  - go env
+
+build_script:
+  - make backend
