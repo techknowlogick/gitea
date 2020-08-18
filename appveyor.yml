@@ -1,8 +1,17 @@
 stack: go 1.15
 
-before_test:
-  - go vet ./...
+version: 1.0.{build}
+
+build_script:
+- sh: >-
+    go version
+    go env
+    make backend
 
 test_script:
-  - ps: >-
-    Write-Host "Test Completed"
+- sh: >-
+    go env
+    echo "hi"
+
+artifacts:
+- path: gitea
