@@ -1,9 +1,8 @@
-build: off
-
-stack: go 1.14
+stack: go 1.15
 
 before_test:
   - go vet ./...
 
 test_script:
-  - go test ./...
+  - ps: >-
+    Write-Host "Test Completed"
