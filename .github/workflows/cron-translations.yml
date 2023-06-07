@@ -43,6 +43,7 @@ jobs:
           upload_sources: true
           upload_translations: false
           source: options/locale/locale_en-US.ini
+          translation: locale_*.ini
         env:
           CROWDIN_PROJECT_ID: gitea
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_KEY }}
