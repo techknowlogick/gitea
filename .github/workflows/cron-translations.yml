@@ -7,34 +7,34 @@ on:
   pull_request:
 
 jobs:
-  crowdin-pull:
-    runs-on: ubuntu-latest
-    if: github.repository == 'go-gitea/gitea'
-    steps:
-      - uses: actions/checkout@v3
-      - name: download from crowdin
-        uses: docker://jonasfranz/crowdin
-        env:
-          CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
-          PLUGIN_DOWNLOAD: true
-          PLUGIN_EXPORT_DIR: options/locale/
-          PLUGIN_IGNORE_BRANCH: true
-          PLUGIN_PROJECT_IDENTIFIER: gitea
-      - name: update locales
-        run: ./build/update-locales.sh
-      - name: push translations to repo
-        uses: appleboy/git-push-action@v0.0.2
-        with:
-          author_email: "teabot@gitea.io"
-          author_name: GiteaBot
-          branch: main
-          commit: true
-          commit_message: "[skip ci] Updated translations via Crowdin"
-          remote: "git@github.com:go-gitea/gitea.git"
-          ssh_key: ${{ secrets.DEPLOY_KEY }}
+  # crowdin-pull:
+  #   runs-on: ubuntu-latest
+  #   if: github.repository == 'go-gitea/gitea'
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: download from crowdin
+  #       uses: docker://jonasfranz/crowdin
+  #       env:
+  #         CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
+  #         PLUGIN_DOWNLOAD: true
+  #         PLUGIN_EXPORT_DIR: options/locale/
+  #         PLUGIN_IGNORE_BRANCH: true
+  #         PLUGIN_PROJECT_IDENTIFIER: gitea
+  #     - name: update locales
+  #       run: ./build/update-locales.sh
+  #     - name: push translations to repo
+  #       uses: appleboy/git-push-action@v0.0.2
+  #       with:
+  #         author_email: "teabot@gitea.io"
+  #         author_name: GiteaBot
+  #         branch: main
+  #         commit: true
+  #         commit_message: "[skip ci] Updated translations via Crowdin"
+  #         remote: "git@github.com:go-gitea/gitea.git"
+  #         ssh_key: ${{ secrets.DEPLOY_KEY }}
   crowdin-push:
     runs-on: ubuntu-latest
-    if: github.repository == 'techknowlogick/gitea'
+    #sif: github.repository == 'techknowlogick/gitea'
     steps:
       - uses: actions/checkout@v3
       - name: push translations to crowdin
