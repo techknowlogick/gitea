@@ -1,0 +1,3 @@
+files:
+  - source: options/locale/locale_en-US.ini
+    translation: options/locale/locale_%locale%.ini
