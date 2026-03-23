@@ -24,6 +24,7 @@ import (
 	ssh_module "code.gitea.io/gitea/modules/ssh"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
+	"code.gitea.io/gitea/services/migrations"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
 
@@ -128,14 +129,12 @@ func runPushSync(ctx context.Context, m *repo_model.PushMirror) error {
 
 	performPush := func(repo *repo_model.Repository, isWiki bool) error {
 		var storageRepo gitrepo.Repository = repo
-		path := repo.RepoPath()
 		if isWiki {
 			storageRepo = repo.WikiStorageRepo()
-			path = repo.WikiPath()
 		}
 		remoteURL, err := gitrepo.GitRemoteGetURL(ctx, storageRepo, m.RemoteName)
 		if err != nil {
-			log.Error("GetRemoteURL(%s) Error %v", path, err)
+			log.Error("GetRemoteURL(%s) Error %v", storageRepo.RelativePath(), err)
 			return errors.New("Unexpected error")
 		}
 
@@ -150,13 +149,13 @@ func runPushSync(ctx context.Context, m *repo_model.PushMirror) error {
 			defer gitRepo.Close()
 
 			endpoint := lfs.DetermineEndpoint(remoteURL.String(), "")
-			lfsClient := lfs.NewClient(endpoint, nil)
+			lfsClient := lfs.NewClient(endpoint, migrations.NewMigrationHTTPTransport())
 			if err := pushAllLFSObjects(ctx, gitRepo, lfsClient); err != nil {
 				return util.SanitizeErrorCredentialURLs(err)
 			}
 		}
 
-		log.Trace("Pushing %s mirror[%d] remote %s", path, m.ID, m.RemoteName)
+		log.Trace("Pushing %s mirror[%d] remote %s", storageRepo.RelativePath(), m.ID, m.RemoteName)
 
 		envs := proxy.EnvWithProxy(remoteURL.URL)
 
@@ -200,8 +199,8 @@ func runPushSync(ctx context.Context, m *repo_model.PushMirror) error {
 			}
 		}
 
-		if err := git.Push(ctx, path, pushOpts); err != nil {
-			log.Error("Error pushing %s mirror[%d] remote %s: %v", path, m.ID, m.RemoteName, err)
+		if err := gitrepo.PushToExternal(ctx, storageRepo, pushOpts); err != nil {
+			log.Error("Error pushing %s mirror[%d] remote %s: %v", storageRepo.RelativePath(), m.ID, m.RemoteName, err)
 
 			return util.SanitizeErrorCredentialURLs(err)
 		}
@@ -233,7 +232,9 @@ func pushAllLFSObjects(ctx context.Context, gitRepo *git.Repository, lfsClient l
 
 	pointerChan := make(chan lfs.PointerBlob)
 	errChan := make(chan error, 1)
-	go lfs.SearchPointerBlobs(ctx, gitRepo, pointerChan, errChan)
+	go func() {
+		errChan <- lfs.SearchPointerBlobs(ctx, gitRepo, pointerChan)
+	}()
 
 	uploadObjects := func(pointers []lfs.Pointer) error {
 		err := lfsClient.Upload(ctx, pointers, func(p lfs.Pointer, objectError error) (io.ReadCloser, error) {
@@ -283,13 +284,12 @@ func pushAllLFSObjects(ctx context.Context, gitRepo *git.Repository, lfsClient l
 		}
 	}
 
-	err, has := <-errChan
-	if has {
+	err := <-errChan
+	if err != nil {
 		log.Error("Error enumerating LFS objects for repository: %v", err)
-		return err
 	}
 
-	return nil
+	return err
 }
 
 func syncPushMirrorWithSyncOnCommit(ctx context.Context, repoID int64) {
