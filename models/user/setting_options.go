@@ -26,4 +26,6 @@ const (
 	UserSSHMirrorPrivPem     = "ssh_mirror.priv_pem"
 	UserSSHMirrorPubPem      = "ssh_mirror.pub_pem"
 	UserSSHMirrorFingerprint = "ssh_mirror.fingerprint"
+
+	SettingsKeyActionsConfig = "actions.config"
 )
