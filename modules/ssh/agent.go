@@ -7,11 +7,7 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"net"
-	"os"
-	"path/filepath"
-	"runtime"
 	"sync"
-	"time"
 
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/util"
@@ -33,60 +29,15 @@ type Agent struct {
 
 // NewSSHAgent creates a new SSH agent with the given private key
 func NewSSHAgent(privateKey ed25519.PrivateKey) (*Agent, error) {
-	var listener net.Listener
-	var socketPath string
-	var tempDir string
-	var err error
-
-	// Setup cleanup function for early returns
-	var cleanup func()
+	listener, socketPath, cleanup, err := createAgentListener()
+	if err != nil {
+		return nil, err
+	}
 	defer func() {
 		if cleanup != nil {
 			cleanup()
 		}
 	}()
-
-	if runtime.GOOS == "windows" {
-		// On Windows, use named pipes
-		agentID, err := util.CryptoRandomString(16)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate agent ID: %w", err)
-		}
-		socketPath = `\\.\pipe\gitea-ssh-agent-` + agentID
-		listener, err = net.Listen("pipe", socketPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create named pipe: %w", err)
-		}
-		cleanup = func() {
-			listener.Close()
-		}
-	} else {
-		tempDir, err = os.MkdirTemp("", "gitea-ssh-agent-")
-		if err != nil {
-			return nil, fmt.Errorf("failed to create temporary directory: %w", err)
-		}
-		cleanup = func() {
-			os.RemoveAll(tempDir)
-		}
-
-		if err := os.Chmod(tempDir, 0o700); err != nil {
-			return nil, fmt.Errorf("failed to set temporary directory permissions: %w", err)
-		}
-
-		socketPath = filepath.Join(tempDir, "agent.sock")
-		listener, err = net.Listen("unix", socketPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create Unix socket: %w", err)
-		}
-		cleanup = func() {
-			listener.Close()
-			os.RemoveAll(tempDir)
-		}
-
-		if err := os.Chmod(socketPath, 0o600); err != nil {
-			return nil, fmt.Errorf("failed to set socket permissions: %w", err)
-		}
-	}
 
 	sshAgent := agent.NewKeyring()
 
@@ -136,14 +87,7 @@ func (sa *Agent) serve() {
 			return
 		default:
 			// Set a timeout for Accept to avoid blocking indefinitely
-			if runtime.GOOS != "windows" {
-				// On Windows, named pipes don't support SetDeadline in the same way
-				if listener, ok := sa.listener.(*net.UnixListener); ok {
-					if err := listener.SetDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
-						log.Debug("Failed to set listener deadline: %v", err)
-					}
-				}
-			}
+			setListenerAcceptDeadline(sa.listener)
 
 			conn, err := sa.listener.Accept()
 			if err != nil {
@@ -175,14 +119,7 @@ func (sa *Agent) serve() {
 
 // cleanup removes the socket file and temporary directory
 func (sa *Agent) cleanup() {
-	if sa.socketPath != "" {
-		if runtime.GOOS != "windows" {
-			// On Windows, named pipes are automatically cleaned up when closed
-			// On Unix-like systems, remove the temporary directory
-			tempDir := filepath.Dir(sa.socketPath)
-			os.RemoveAll(tempDir)
-		}
-	}
+	cleanupAgentSocket(sa.socketPath)
 }
 
 // GetSocketPath returns the path to the SSH agent socket

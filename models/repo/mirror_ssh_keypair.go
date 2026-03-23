@@ -7,8 +7,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -78,8 +76,7 @@ func CreateUserSSHKeypair(ctx context.Context, ownerID int64) (*UserSSHKeypair, 
 
 	publicKeyStr := string(ssh.MarshalAuthorizedKey(sshPublicKey))
 
-	fingerprint := sha256.Sum256(sshPublicKey.Marshal())
-	fingerprintStr := hex.EncodeToString(fingerprint[:])
+	fingerprintStr := ssh.FingerprintSHA256(sshPublicKey)
 
 	privateKeyEncrypted, err := secret.EncryptSecret(setting.SecretKey, string(privateKey))
 	if err != nil {
@@ -133,7 +130,7 @@ func (k *UserSSHKeypair) GetPublicKeyWithComment(ctx context.Context) (string, e
 		domain = "gitea"
 	}
 
-	keyID := k.Fingerprint
+	keyID := strings.TrimPrefix(k.Fingerprint, "SHA256:")
 	if len(keyID) > 8 {
 		keyID = keyID[:8]
 	}
@@ -158,7 +155,9 @@ func DeleteUserSSHKeypair(ctx context.Context, ownerID int64) error {
 // RegenerateUserSSHKeypair regenerates an SSH keypair for the given owner
 func RegenerateUserSSHKeypair(ctx context.Context, ownerID int64) (*UserSSHKeypair, error) {
 	return db.WithTx2(ctx, func(ctx context.Context) (*UserSSHKeypair, error) {
-		_ = DeleteUserSSHKeypair(ctx, ownerID)
+		if err := DeleteUserSSHKeypair(ctx, ownerID); err != nil {
+			return nil, fmt.Errorf("failed to delete existing keypair: %w", err)
+		}
 
 		newKeypair, err := CreateUserSSHKeypair(ctx, ownerID)
 		if err != nil {

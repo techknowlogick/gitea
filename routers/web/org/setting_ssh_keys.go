@@ -6,6 +6,7 @@ package org
 import (
 	"net/http"
 
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/templates"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
 	"code.gitea.io/gitea/services/context"
@@ -33,7 +34,11 @@ func SSHKeys(ctx *context.Context) {
 		return
 	}
 
-	ctx.Data["SSHKeypair"] = keypair
+	publicKeyWithComment, _ := keypair.GetPublicKeyWithComment(ctx)
+	ctx.Data["SSHKeypair"] = struct {
+		*repo_model.UserSSHKeypair
+		PublicKeyWithComment string
+	}{keypair, publicKeyWithComment}
 
 	ctx.HTML(http.StatusOK, tplSettingsSSHKeys)
 }

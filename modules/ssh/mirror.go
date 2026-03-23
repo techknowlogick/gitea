@@ -67,7 +67,7 @@ func GetSSHKeypairForRepository(ctx context.Context, repo *repo_model.Repository
 // Returns nil if the URL is not an SSH URL
 func GetSSHKeypairForURL(ctx context.Context, repo *repo_model.Repository, url string) (*repo_model.UserSSHKeypair, error) {
 	if !IsSSHURL(url) {
-		return nil, nil
+		return nil, nil //nolint:nilnil // non-SSH URLs don't need a keypair
 	}
 	return GetSSHKeypairForRepository(ctx, repo)
 }

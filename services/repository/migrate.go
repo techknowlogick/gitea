@@ -28,6 +28,43 @@ import (
 	"code.gitea.io/gitea/modules/util"
 )
 
+func setupMigrationSSHAuth(ctx context.Context, repo *repo_model.Repository, remoteURL string) (string, func(), error) {
+	if !ssh_module.IsSSHURL(remoteURL) {
+		return "", func() {}, nil
+	}
+
+	keypair, err := ssh_module.GetSSHKeypairForRepository(ctx, repo)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get SSH keypair for repository: %w", err)
+	}
+	if keypair == nil {
+		return "", func() {}, nil
+	}
+
+	privateKey, err := keypair.GetDecryptedPrivateKey()
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to decrypt private key: %w", err)
+	}
+
+	socketPath, cleanup, err := ssh_module.CreateTemporaryAgent(privateKey)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create SSH agent: %w", err)
+	}
+
+	return socketPath, cleanup, nil
+}
+
+func cloneExternalRepoWithSSHAuth(ctx context.Context, repo *repo_model.Repository, remoteURL string, storageRepo gitrepo.Repository, cloneOpts git.CloneRepoOptions) error {
+	sshAuthSock, cleanup, err := setupMigrationSSHAuth(ctx, repo, remoteURL)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	cloneOpts.SSHAuthSock = sshAuthSock
+	return gitrepo.CloneExternalRepo(ctx, remoteURL, storageRepo, cloneOpts)
+}
+
 func cloneWiki(ctx context.Context, repo *repo_model.Repository, opts migration.MigrateOptions, migrateTimeout time.Duration) (string, error) {
 	wikiRemoteURL := repo_module.WikiRemoteURL(ctx, opts.CloneAddr)
 	if wikiRemoteURL == "" {
@@ -52,27 +89,7 @@ func cloneWiki(ctx context.Context, repo *repo_model.Repository, opts migration.
 		SkipTLSVerify: setting.Migrations.SkipTLSVerify,
 	}
 
-	if ssh_module.IsSSHURL(wikiRemoteURL) {
-		keypair, err := ssh_module.GetSSHKeypairForRepository(ctx, repo)
-		if err != nil {
-			log.Error("Failed to get SSH keypair for wiki clone: %v", err)
-		} else if keypair != nil {
-			privateKey, err := keypair.GetDecryptedPrivateKey()
-			if err != nil {
-				log.Error("Failed to decrypt private key for wiki clone: %v", err)
-			} else {
-				socketPath, cleanup, err := ssh_module.CreateTemporaryAgent(privateKey)
-				if err != nil {
-					log.Error("Failed to create SSH agent for wiki clone: %v", err)
-				} else {
-					cloneOpts.SSHAuthSock = socketPath
-					defer cleanup()
-				}
-			}
-		}
-	}
-
-	if err := gitrepo.CloneExternalRepo(ctx, wikiRemoteURL, storageRepo, cloneOpts); err != nil {
+	if err := cloneExternalRepoWithSSHAuth(ctx, repo, wikiRemoteURL, storageRepo, cloneOpts); err != nil {
 		log.Error("Clone wiki failed, err: %v", err)
 		cleanIncompleteWikiPath()
 		return "", err
@@ -120,30 +137,11 @@ func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 		SkipTLSVerify: setting.Migrations.SkipTLSVerify,
 	}
 
-	if ssh_module.IsSSHURL(opts.CloneAddr) {
-		if repo.Owner == nil {
-			repo.Owner = u
-		}
-		keypair, err := ssh_module.GetSSHKeypairForRepository(ctx, repo)
-		if err != nil {
-			return repo, fmt.Errorf("failed to get SSH keypair for repository: %w", err)
-		}
-		if keypair != nil {
-			privateKey, err := keypair.GetDecryptedPrivateKey()
-			if err != nil {
-				return repo, fmt.Errorf("failed to decrypt private key: %w", err)
-			}
-
-			socketPath, cleanup, err := ssh_module.CreateTemporaryAgent(privateKey)
-			if err != nil {
-				return repo, fmt.Errorf("failed to create SSH agent: %w", err)
-			}
-			cloneOpts.SSHAuthSock = socketPath
-			defer cleanup()
-		}
+	if ssh_module.IsSSHURL(opts.CloneAddr) && repo.Owner == nil {
+		repo.Owner = u
 	}
 
-	if err := gitrepo.CloneExternalRepo(ctx, opts.CloneAddr, repo, cloneOpts); err != nil {
+	if err := cloneExternalRepoWithSSHAuth(ctx, repo, opts.CloneAddr, repo, cloneOpts); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return repo, fmt.Errorf("clone timed out, consider increasing [git.timeout] MIGRATE in app.ini, underlying err: %w", err)
 		}
