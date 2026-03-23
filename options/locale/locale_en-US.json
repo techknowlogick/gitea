@@ -2170,6 +2170,8 @@
   "repo.settings.transfer_abort_invalid": "You cannot cancel a non existent repository transfer.",
   "repo.settings.transfer_abort_success": "The repository transfer to %s was successfully canceled.",
   "repo.settings.transfer_desc": "Transfer this repository to a user or to an organization for which you have administrator rights.",
+  "repo.settings.enter_repo_name_to_confirm": "Enter the repository name as confirmation:",
+  "repo.settings.enter_repo_full_name_to_confirm": "Enter the full repository name (owner/name) as confirmation:",
   "repo.settings.transfer_form_title": "Enter the repository name as confirmation:",
   "repo.settings.transfer_in_progress": "There is currently an ongoing transfer. Please cancel it if you would like to transfer this repository to another user.",
   "repo.settings.transfer_notices_1": "- You will lose access to the repository if you transfer it to an individual user.",

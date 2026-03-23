@@ -887,8 +887,8 @@
 				</div>
 				<form class="ui form" action="{{.Link}}" method="post">
 					<input type="hidden" name="action" value="convert">
-					{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name "InputID" "repo_name_to_convert")}}
-					{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (ctx.Locale.Tr "repo.settings.convert_confirm") "ModalButtonOkClass" "red")}}
+					{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name)}}
+					{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (ctx.Locale.Tr "repo.settings.convert_confirm"))}}
 				</form>
 			</div>
 		</div>
@@ -904,8 +904,8 @@
 				</div>
 				<form class="ui form" action="{{.Link}}" method="post">
 					<input type="hidden" name="action" value="convert_fork">
-					{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name "InputID" "repo_name_to_convert_fork")}}
-					{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (ctx.Locale.Tr "repo.settings.convert_fork_confirm") "ModalButtonOkClass" "red")}}
+					{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name)}}
+					{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (ctx.Locale.Tr "repo.settings.convert_fork_confirm"))}}
 				</form>
 			</div>
 		</div>
@@ -923,13 +923,13 @@
 			</div>
 			<form class="ui form" action="{{.Link}}" method="post">
 				<input type="hidden" name="action" value="transfer">
-				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name "InputID" "repo_name_to_transfer")}}
+				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name)}}
 				<div class="required field">
 					<label for="new_owner_name">{{ctx.Locale.Tr "repo.settings.transfer_owner"}}</label>
 					<input id="new_owner_name" name="new_owner_name" required>
 				</div>
 
-				{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (ctx.Locale.Tr "repo.settings.transfer_perform") "ModalButtonOkClass" "red")}}
+				{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (ctx.Locale.Tr "repo.settings.transfer_perform"))}}
 			</form>
 		</div>
 	</div>
@@ -948,8 +948,8 @@
 			</div>
 			<form class="ui form" action="{{.Link}}" method="post">
 				<input type="hidden" name="action" value="delete">
-				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name "InputID" "repo_name_to_delete")}}
-				{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (ctx.Locale.Tr "repo.settings.confirm_delete") "ModalButtonOkClass" "red")}}
+				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name)}}
+				{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (ctx.Locale.Tr "repo.settings.confirm_delete"))}}
 			</form>
 		</div>
 	</div>
@@ -988,16 +988,16 @@
 				{{if not .Repository.IsPrivate}}
 					<div class="field">
 						<label>
-							{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+							{{ctx.Locale.Tr "repo.settings.enter_repo_full_name_to_confirm"}}
 							<span class="tw-text-red">{{.Repository.FullName}}</span>
 						</label>
 					</div>
 					<div class="required field">
-						<label for="confirm_repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
-						<input id="confirm_repo_name" name="confirm_repo_name" required maxlength="200">
+						<label>{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<input name="confirm_repo_name" required maxlength="200">
 					</div>
 				{{end}}
-				{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (Iif .Repository.IsPrivate (ctx.Locale.Tr "repo.settings.visibility.public.button") (ctx.Locale.Tr "repo.settings.visibility.private.button")) "ModalButtonOkClass" "red")}}
+				{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (Iif .Repository.IsPrivate (ctx.Locale.Tr "repo.settings.visibility.public.button") (ctx.Locale.Tr "repo.settings.visibility.private.button")))}}
 			</form>
 		</div>
 	{{end}}
@@ -1014,8 +1014,8 @@
 			</div>
 			<form class="ui form" action="{{.Link}}" method="post">
 				<input type="hidden" name="action" value="delete-wiki">
-				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name "InputID" "repo_name_to_delete_wiki")}}
-				{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm" "ModalButtonOkText" (ctx.Locale.Tr "repo.settings.confirm_wiki_delete") "ModalButtonOkClass" "red")}}
+				{{template "repo/settings/repo_name_confirm_fields" (dict "RepoName" .Repository.Name)}}
+				{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (ctx.Locale.Tr "repo.settings.confirm_wiki_delete"))}}
 			</form>
 		</div>
 	</div>
