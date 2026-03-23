@@ -38,6 +38,13 @@ func AddOAuth2DeviceAuthorizationTableAndFixBuiltinNativeApps(x *xorm.Engine) er
 		return err
 	}
 
+	// Sync the oauth2Application table to ensure the client_id column exists.
+	// Coming from older versions there are potential situations where a column
+	// was missed in a migration, and only added during the SyncAllTables() call
+	if err := x.Sync(new(oauth2Application)); err != nil {
+		return err
+	}
+
 	_, err := x.In("client_id", []string{
 		"a4792ccc-144e-407e-86c9-5e7d8d9c3269",
 		"e90ee53c-94e2-48ac-9358-a874fb9e0662",
