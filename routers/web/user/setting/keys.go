@@ -374,6 +374,6 @@ func RegenerateUserSSHKeypair(ctx *context.Context) {
 		return
 	}
 
-	ctx.Flash.Success(ctx.Tr("settings.mirror_ssh_key_regenerated"))
+	ctx.Flash.Success(ctx.Tr("settings.mirror_ssh_regenerated"))
 	ctx.Redirect(setting.AppSubURL + "/user/settings/keys")
 }
