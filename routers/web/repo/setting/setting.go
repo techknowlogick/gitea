@@ -999,22 +999,23 @@ func handleSettingsPostUnarchive(ctx *context.Context) {
 }
 
 func handleSettingsPostVisibility(ctx *context.Context) {
-	form := web.GetForm(ctx).(*forms.RepoSettingForm)
 	repo := ctx.Repo.Repository
 	if repo.IsFork {
-		ctx.Flash.Error(ctx.Tr("repo.settings.visibility.fork_error"))
-		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+		ctx.JSONError(ctx.Tr("repo.settings.visibility.fork_error"))
+		return
+	}
+
+	// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
+	if setting.Repository.ForcePrivate && repo.IsPrivate && !ctx.Doer.IsAdmin {
+		ctx.JSONError(ctx.Tr("form.repository_force_private"))
+		return
+	}
+	if !repo.IsPrivate && repo.FullName() != ctx.FormString("confirm_repo_name") {
+		ctx.JSONError(ctx.Tr("form.enterred_invalid_repo_name"))
 		return
 	}
 
 	var err error
-
-	// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
-	if setting.Repository.ForcePrivate && repo.IsPrivate && !ctx.Doer.IsAdmin {
-		ctx.RenderWithErrDeprecated(ctx.Tr("form.repository_force_private"), tplSettingsOptions, form)
-		return
-	}
-
 	if repo.IsPrivate {
 		err = repo_service.MakeRepoPublic(ctx, repo)
 	} else {
@@ -1023,15 +1024,13 @@ func handleSettingsPostVisibility(ctx *context.Context) {
 
 	if err != nil {
 		log.Error("Tried to change the visibility of the repo: %s", err)
-		ctx.Flash.Error(ctx.Tr("repo.settings.visibility.error"))
-		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+		ctx.JSONError(ctx.Tr("repo.settings.visibility.error"))
 		return
 	}
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.visibility.success"))
-
 	log.Trace("Repository visibility changed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
-	ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+	ctx.JSONRedirect(ctx.Repo.RepoLink + "/settings")
 }
 
 func handleSettingRemoteAddrError(ctx *context.Context, err error, form *forms.RepoSettingForm) {
