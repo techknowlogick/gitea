@@ -981,24 +981,24 @@
 					</div>
 					{{end}}
 				{{end}}
+				<form class="ui form form-fetch-action" action="{{.Link}}" method="post">
+					<input type="hidden" name="action" value="visibility">
+					<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
+					{{if not .Repository.IsPrivate}}
+						<div class="field">
+							<label>
+								{{ctx.Locale.Tr "repo.settings.enter_repo_full_name_to_confirm"}}
+								<span class="tw-text-red">{{.Repository.FullName}}</span>
+							</label>
+						</div>
+						<div class="required field">
+							<label>{{ctx.Locale.Tr "repo.repo_name"}}</label>
+							<input name="confirm_repo_name" required maxlength="200">
+						</div>
+					{{end}}
+					{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (Iif .Repository.IsPrivate (ctx.Locale.Tr "repo.settings.visibility.public.button") (ctx.Locale.Tr "repo.settings.visibility.private.button")))}}
+				</form>
 			</div>
-			<form class="ui form form-fetch-action" action="{{.Link}}" method="post">
-				<input type="hidden" name="action" value="visibility">
-				<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
-				{{if not .Repository.IsPrivate}}
-					<div class="field">
-						<label>
-							{{ctx.Locale.Tr "repo.settings.enter_repo_full_name_to_confirm"}}
-							<span class="tw-text-red">{{.Repository.FullName}}</span>
-						</label>
-					</div>
-					<div class="required field">
-						<label>{{ctx.Locale.Tr "repo.repo_name"}}</label>
-						<input name="confirm_repo_name" required maxlength="200">
-					</div>
-				{{end}}
-				{{template "base/modal_actions_confirm" (dict "ModalButtonDangerText" (Iif .Repository.IsPrivate (ctx.Locale.Tr "repo.settings.visibility.public.button") (ctx.Locale.Tr "repo.settings.visibility.private.button")))}}
-			</form>
 		</div>
 	{{end}}
 
