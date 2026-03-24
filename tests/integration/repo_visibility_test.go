@@ -10,15 +10,11 @@ import (
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/tests"
-
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRepositoryVisibilityChange(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
-		defer tests.PrepareTestEnv(t)()
-
 		session := loginUser(t, "user2")
 
 		t.Run("MakePrivateRequiresCorrectName", func(t *testing.T) {
