@@ -1005,7 +1005,7 @@ func handleSettingsPostVisibility(ctx *context.Context) {
 		return
 	}
 
-	private := ctx.FormBool("private")
+	private := ctx.FormOptionalBool("private").ValueOrDefault(true) // default to true for privacy & safety
 
 	// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
 	if !private && setting.Repository.ForcePrivate && !ctx.Doer.IsAdmin {
