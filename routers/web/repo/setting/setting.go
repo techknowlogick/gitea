@@ -1005,23 +1005,19 @@ func handleSettingsPostVisibility(ctx *context.Context) {
 		return
 	}
 
+	private := ctx.FormBool("private")
+
 	// when ForcePrivate enabled, you could change public repo to private, but only admin users can change private to public
-	if setting.Repository.ForcePrivate && repo.IsPrivate && !ctx.Doer.IsAdmin {
+	if !private && setting.Repository.ForcePrivate && !ctx.Doer.IsAdmin {
 		ctx.JSONError(ctx.Tr("form.repository_force_private"))
 		return
 	}
-	if !repo.IsPrivate && repo.FullName() != ctx.FormString("confirm_repo_name") {
+	if private && repo.FullName() != ctx.FormString("confirm_repo_name") {
 		ctx.JSONError(ctx.Tr("form.enterred_invalid_repo_name"))
 		return
 	}
 
-	var err error
-	if repo.IsPrivate {
-		err = repo_service.MakeRepoPublic(ctx, repo)
-	} else {
-		err = repo_service.MakeRepoPrivate(ctx, repo)
-	}
-
+	err := repo_service.MakeRepoPrivate(ctx, repo, private)
 	if err != nil {
 		log.Error("Tried to change the visibility of the repo: %s", err)
 		ctx.JSONError(ctx.Tr("repo.settings.visibility.error"))
@@ -1029,7 +1025,6 @@ func handleSettingsPostVisibility(ctx *context.Context) {
 	}
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.visibility.success"))
-	log.Trace("Repository visibility changed: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 	ctx.JSONRedirect(ctx.Repo.RepoLink + "/settings")
 }
 

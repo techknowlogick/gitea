@@ -24,6 +24,7 @@ func TestRepositoryVisibilityChange(t *testing.T) {
 		// Wrong name should be rejected with a JSON error
 		req := NewRequestWithValues(t, "POST", "/user2/repo1/settings", map[string]string{
 			"action":            "visibility",
+			"private":           "true",
 			"confirm_repo_name": "wrong-name",
 		})
 		resp := session.MakeRequest(t, req, http.StatusBadRequest)
@@ -35,6 +36,7 @@ func TestRepositoryVisibilityChange(t *testing.T) {
 		// Correct full name (owner/repo) should succeed with a JSON redirect
 		req = NewRequestWithValues(t, "POST", "/user2/repo1/settings", map[string]string{
 			"action":            "visibility",
+			"private":           "true",
 			"confirm_repo_name": "user2/repo1",
 		})
 		resp = session.MakeRequest(t, req, http.StatusOK)
@@ -46,7 +48,8 @@ func TestRepositoryVisibilityChange(t *testing.T) {
 
 	t.Run("MakePublicDoesNotRequireName", func(t *testing.T) {
 		req := NewRequestWithValues(t, "POST", "/user2/repo2/settings", map[string]string{
-			"action": "visibility",
+			"action":  "visibility",
+			"private": "false",
 		})
 		resp := session.MakeRequest(t, req, http.StatusOK)
 		assert.NotEmpty(t, test.ParseJSONRedirect(resp.Body.Bytes()).Redirect)
