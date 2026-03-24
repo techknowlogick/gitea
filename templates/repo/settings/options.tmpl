@@ -983,7 +983,6 @@
 				{{end}}
 				<form class="ui form form-fetch-action" action="{{.Link}}" method="post">
 					<input type="hidden" name="action" value="visibility">
-					<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
 					{{if not .Repository.IsPrivate}}
 						<div class="field">
 							<label>
