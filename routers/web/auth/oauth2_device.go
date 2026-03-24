@@ -230,7 +230,7 @@ func DeviceGrantApplicationOAuth(ctx *context.Context) {
 	}); err != nil {
 		switch {
 		case errors.Is(err, errDeviceAuthorizationGrantScopeMismatch):
-			ctx.Data["Error"] = AuthorizeError{ErrorDescription: errDeviceAuthorizationGrantScopeMismatch.Error()}
+			ctx.Data["Error"] = AuthorizeError{ErrorDescription: ctx.Locale.TrString("auth.device_scope_mismatch")}
 			ctx.HTML(http.StatusBadRequest, tplGrantError)
 		case errors.Is(err, auth_model.ErrOAuth2DeviceAuthorizationInvalidated):
 			if err := renderCurrentOAuthDeviceAuthorizationResult(ctx, form.DeviceAuthorizationID); err != nil {
@@ -351,6 +351,7 @@ func handleDeviceCode(ctx *context.Context, form forms.AccessTokenForm, serverKe
 		if tokenErr != nil {
 			return tokenErr
 		}
+
 		return nil
 	})
 	if err != nil {

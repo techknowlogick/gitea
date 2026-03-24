@@ -37,6 +37,18 @@ const (
 
 var ErrOAuth2DeviceAuthorizationInvalidated = errors.New("oauth2 device authorization changed state")
 
+// DeleteExpiredDeviceAuthorizations removes device authorizations that are
+// expired or in a terminal state (denied/consumed).
+func DeleteExpiredDeviceAuthorizations(ctx context.Context) error {
+	_, err := db.GetEngine(ctx).Where(
+		"expires_at_unix < ? OR status IN (?, ?)",
+		timeutil.TimeStampNow(),
+		OAuth2DeviceAuthorizationDenied,
+		OAuth2DeviceAuthorizationConsumed,
+	).Delete(new(OAuth2DeviceAuthorization))
+	return err
+}
+
 const oauth2DeviceAuthorizationUserCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 // OAuth2DeviceAuthorization stores state for the OAuth device authorization flow.
@@ -251,6 +263,6 @@ func generateOAuth2UserCode() (string, error) {
 }
 
 func hashOAuth2DeviceCode(deviceCode string) string {
-	hash := sha256.Sum256([]byte(deviceCode))
+	hash := sha256.Sum256([]byte(strings.TrimSpace(deviceCode)))
 	return hex.EncodeToString(hash[:])
 }
