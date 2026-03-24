@@ -16,8 +16,7 @@ import (
 )
 
 func TestRepositoryVisibilityChange(t *testing.T) {
-	defer tests.PrepareTestEnv(t, 1)()
-
+	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
 
 	t.Run("MakePrivateRequiresCorrectName", func(t *testing.T) {
